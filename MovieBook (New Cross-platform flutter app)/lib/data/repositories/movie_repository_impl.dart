@@ -17,16 +17,32 @@ class MovieRepositoryImpl extends MovieRepository {
   final MovieRemoteDataResource remoteDataResource;
   final MovieLocalDataSource localDataSource;
 
+  final Map<String, dynamic> _cache = {};
+  final Duration cacheExpiration = const Duration(minutes: 30);
+
   MovieRepositoryImpl(
-    this.remoteDataResource,
-    this.localDataSource,
-  );
+      this.remoteDataResource,
+      this.localDataSource,
+      );
 
-  @override
-  Future<Either<AppError, List<MovieModel>>> getTrending() async {
+  Future<Either<AppError, T>> _withCache<T>(
+      String key,
+      Future<T> Function() fetchData,
+      ) async {
     try {
-      final movies = await remoteDataResource.getTrending();
-      return Right(movies);
+      if (_cache.containsKey(key)) {
+        final cachedData = _cache[key] as T;
+        return Right(cachedData);
+      }
+
+      final freshData = await fetchData();
+      _cache[key] = freshData;
+
+      Future.delayed(cacheExpiration, () {
+        _cache.remove(key);
+      });
+
+      return Right(freshData);
     } on SocketException {
       return const Left(AppError(AppErrorType.network));
     } on Exception {
@@ -35,89 +51,36 @@ class MovieRepositoryImpl extends MovieRepository {
   }
 
   @override
-  Future<Either<AppError, List<MovieEntity>>> getCommingsoon() async {
-    try {
-      final movies = await remoteDataResource.getCommingSoon();
-      return Right(movies);
-    } on SocketException {
-      return const Left(AppError(AppErrorType.network));
-    } on Exception {
-      return const Left(AppError(AppErrorType.api));
-    }
-  }
+  Future<Either<AppError, List<MovieModel>>> getTrending() async =>
+      _withCache('getTrending', () => remoteDataResource.getTrending());
 
   @override
-  Future<Either<AppError, List<MovieEntity>>> getPlayingNow() async {
-    try {
-      final movies = await remoteDataResource.getPlayingNow();
-      return Right(movies);
-    } on SocketException {
-      return const Left(AppError(AppErrorType.network));
-    } on Exception {
-      return const Left(AppError(AppErrorType.api));
-    }
-  }
+  Future<Either<AppError, List<MovieEntity>>> getCommingsoon() async =>
+      _withCache('getCommingSoon', () => remoteDataResource.getCommingSoon());
 
   @override
-  Future<Either<AppError, List<MovieEntity>>> getPopular() async {
-    try {
-      final movies = await remoteDataResource.getPopular();
-      return Right(movies);
-    } on SocketException {
-      return const Left(AppError(AppErrorType.network));
-    } on Exception {
-      return const Left(AppError(AppErrorType.api));
-    }
-  }
+  Future<Either<AppError, List<MovieEntity>>> getPlayingNow() async =>
+      _withCache('getPlayingNow', () => remoteDataResource.getPlayingNow());
 
   @override
-  Future<Either<AppError, MovieDetailModel>> getMovieDetail(int id) async {
-    try {
-      final movies = await remoteDataResource.getMovieDetail(id);
-      return Right(movies);
-    } on SocketException {
-      return const Left(AppError(AppErrorType.network));
-    } on Exception {
-      return const Left(AppError(AppErrorType.api));
-    }
-  }
+  Future<Either<AppError, List<MovieEntity>>> getPopular() async =>
+      _withCache('getPopular', () => remoteDataResource.getPopular());
 
   @override
-  Future<Either<AppError, List<CastModel>>> getCastCrew(int id) async {
-    try {
-      final castCrew = await remoteDataResource.getCastCrew(id);
-      return Right(castCrew);
-    } on SocketException {
-      return const Left(AppError(AppErrorType.network));
-    } on Exception {
-      return const Left(AppError(AppErrorType.api));
-    }
-  }
+  Future<Either<AppError, MovieDetailModel>> getMovieDetail(int id) async =>
+      _withCache('getMovieDetail$id', () => remoteDataResource.getMovieDetail(id));
 
   @override
-  Future<Either<AppError, List<VideoModel>>> getVideos(int id) async {
-    try {
-      final videos = await remoteDataResource.getVideos(id);
-      return Right(videos);
-    } on SocketException {
-      return const Left(AppError(AppErrorType.network));
-    } on Exception {
-      return const Left(AppError(AppErrorType.api));
-    }
-  }
+  Future<Either<AppError, List<CastModel>>> getCastCrew(int id) async =>
+      _withCache('getCastCrew$id', () => remoteDataResource.getCastCrew(id));
 
   @override
-  Future<Either<AppError, List<MovieModel>>> getSearchedMovies(
-      String searchTerm) async {
-    try {
-      final movies = await remoteDataResource.getSearchedMovies(searchTerm);
-      return Right(movies);
-    } on SocketException {
-      return const Left(AppError(AppErrorType.network));
-    } on Exception {
-      return const Left(AppError(AppErrorType.api));
-    }
-  }
+  Future<Either<AppError, List<VideoModel>>> getVideos(int id) async =>
+      _withCache('getVideos$id', () => remoteDataResource.getVideos(id));
+
+  @override
+  Future<Either<AppError, List<MovieModel>>> getSearchedMovies(String searchTerm) async =>
+      _withCache('getSearchedMovies$searchTerm', () => remoteDataResource.getSearchedMovies(searchTerm));
 
   @override
   Future<Either<AppError, bool>> checkIfMovieisFavorite(int movieId) async {
