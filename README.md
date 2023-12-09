@@ -19,7 +19,6 @@ This Flutter Movie App is a robust application that integrates with the TMDb (Th
 
 - **Flutter**: A cross-platform framework for building natively compiled applications.
 - **TMDb API**: Real-time access to a comprehensive movie database.
-- **Firebase Authentication**: Secure user authentication and management.
 - **Cache Management**: Efficient caching for improved app responsiveness.
 - **CloudFront CDN**: Amazon's Content Delivery Network for optimized image delivery.
 
@@ -27,8 +26,7 @@ This Flutter Movie App is a robust application that integrates with the TMDb (Th
 
 1. **Clone Repository**: Clone the repository to your local machine.
 2. **API Key**: Obtain a TMDb API key and integrate it with the app.
-3. **Firebase Setup**: Configure Firebase for authentication services.
-4. **Dependencies Installation**: Run `flutter pub get` to install project dependencies.
-5. **Run the App**: Execute `flutter run` to launch the app locally.
+3. **Dependencies Installation**: Run `flutter pub get` to install project dependencies.
+4. **Run the App**: Execute `flutter run` to launch the app locally.
 
 Experience the power of Flutter combined with TMDb API, Firebase authentication, and CloudFront CDN to deliver a high-performance, visually appealing movie app. Happy coding!
